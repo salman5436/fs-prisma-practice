@@ -1,14 +1,14 @@
 // //schema.prisma: Prisma Configuration File That Will Contain Your Database Schema
 
-// generator client {
-//     provider = "prisma-client-js"
-// }
+generator client {
+    provider = "prisma-client-js"
+}
 
-// datasource db {
-//     provider  = "postgresql"
-//     url       = env("POSTGRES_PRISMA_URL") //uses connection pooling
-//     directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection}
-// }
+datasource db {
+    provider  = "postgresql"
+    url       = env("POSTGRES_PRISMA_URL") //uses connection pooling
+    directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection}
+}
 
 // model Post {
 //     id        String  @id @default(cuid())
@@ -36,33 +36,68 @@
 // // This Prisma schema defines two models, each of which will map to a table in the underlying database: User and Post. 
 // //Notice that there's also a relation (one-to-many) between the two models, via the author field on Post and the posts field on User.
 
-// schema.prisma
 
-generator client {
-  provider = "prisma-client-js"
-}
 
-datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
-}
+// Updated schema.prisma ------
+// To add the missing tables that are required by NextAuth so that authenticated users can create, publish, and delete posts via the UI::
+
+//  schema.prisma
 
 model Post {
-  id        String     @default(cuid()) @id
-  title     String
-  content   String?
-  published Boolean @default(false)
-  author    User?   @relation(fields: [authorId], references: [id])
-  authorId  String?
+    id        String  @id @default(cuid())
+    title     String
+    content   String?
+    published Boolean @default(false)
+    author    User?   @relation(fields: [authorId], references: [id])
+    authorId  String?
+}
+
+
+model Account {
+    id                 String  @id @default(cuid())
+    userId             String  @map("user_id")
+    type               String  
+    provider           String  
+    providerAccountId  String  @map("provider_account_id")
+    refresh_token      String?
+    access_token       String?  
+    expires_at         Int?  
+    token_type         String?  
+    scope              String?  
+    id_token           String?  
+    session_state      String?  
+    oauth_token_secret String?  
+    oauth_token        String?
+
+    user  User  @relation(fields:  [userId], references:  [id], onDelete: Cascade)  
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String  @id @default(cuid())
+    sessionToken String  @unique@map("session_token")
+    userId       String  @map("user_id")
+    expires      DateTime 
+    user         User    @relation(fields:  [userId], references:  [id], onDelete: Cascade)
 }
 
 model User {
-  id            String       @default(cuid()) @id
-  name          String?
-  email         String?   @unique
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
-  posts         Post[]
-  @@map(name: "users")
+    id            String   @id @default(cuid())
+    name          String?
+    email         String?@unique
+    emailVerified DateTime? 
+    image         String?
+    posts         Post[]
+    accounts      Account[]
+    sessions      Session[]
+}
+
+model VerificationToken {
+    id         Int     @id @default(autoincrement())
+    identifier String
+    token      String  @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
 }
