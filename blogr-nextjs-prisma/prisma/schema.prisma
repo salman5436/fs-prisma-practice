@@ -36,8 +36,6 @@ datasource db {
 // // This Prisma schema defines two models, each of which will map to a table in the underlying database: User and Post. 
 // //Notice that there's also a relation (one-to-many) between the two models, via the author field on Post and the posts field on User.
 
-
-
 // Updated schema.prisma ------
 // To add the missing tables that are required by NextAuth so that authenticated users can create, publish, and delete posts via the UI::
 
@@ -52,51 +50,52 @@ model Post {
     authorId  String?
 }
 
-
 model Account {
     id                 String  @id @default(cuid())
     userId             String  @map("user_id")
-    type               String  
-    provider           String  
+    type               String
+    provider           String
     providerAccountId  String  @map("provider_account_id")
     refresh_token      String?
-    access_token       String?  
-    expires_at         Int?  
-    token_type         String?  
-    scope              String?  
-    id_token           String?  
-    session_state      String?  
-    oauth_token_secret String?  
+    access_token       String?
+    expires_at         Int?
+    token_type         String?
+    scope              String?
+    id_token           String?
+    session_state      String?
+    oauth_token_secret String?
     oauth_token        String?
 
-    user  User  @relation(fields:  [userId], references:  [id], onDelete: Cascade)  
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String  @id @default(cuid())
-    sessionToken String  @unique@map("session_token")
-    userId       String  @map("user_id")
-    expires      DateTime 
-    user         User    @relation(fields:  [userId], references:  [id], onDelete: Cascade)
+    id           String   @id @default(cuid())
+    sessionToken String   @unique @map("session_token")
+    userId       String   @map("user_id")
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String   @id @default(cuid())
+    id            String    @id @default(cuid())
     name          String?
-    email         String?@unique
-    emailVerified DateTime? 
+    email         String?   @unique
+    emailVerified DateTime?
     image         String?
     posts         Post[]
     accounts      Account[]
     sessions      Session[]
+
+    @@map(name: "users")
 }
 
 model VerificationToken {
-    id         Int     @id @default(autoincrement())
+    id         Int      @id @default(autoincrement())
     identifier String
-    token      String  @unique
+    token      String   @unique
     expires    DateTime
 
     @@unique([identifier, token])
